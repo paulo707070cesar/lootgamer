@@ -1,0 +1,1 @@
+</main><div id="toast" class="toast" hidden></div><script src="<?= asset('js/admin.js') ?>?v=1" defer></script><?php if (!empty($pageScript)): ?><script src="<?= asset($pageScript) ?>?v=2" defer></script><?php endif; ?></body></html>

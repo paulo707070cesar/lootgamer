@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+config.php
+*.log
+*.zip
+.DS_Store
+Thumbs.db
+node_modules/
+vendor/
+.idea/
+.vscode/
