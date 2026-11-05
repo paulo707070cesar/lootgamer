@@ -102,8 +102,16 @@ function valid_http_url(?string $u, bool $httpsOnly = false): bool {
 
 /* Imagens */
 function img_src(?string $path, ?string $url = null): string {
-    if ($path) return url($path);
-    if ($url && valid_http_url($url, true)) return $url;
+    $path = trim((string)$path);
+    // Alguns registros antigos guardam a URL completa no campo image_path.
+    // Não transforme https://... em /https://..., pois isso quebra a imagem.
+    if ($path !== '') {
+        if (preg_match('~^https://~i', $path) && valid_http_url($path, true)) return $path;
+        // Caminhos locais devem ser relativos à raiz pública do projeto.
+        if (preg_match('~^https?://~i', $path)) $path = '';
+        else return url($path);
+    }
+    if ($url && valid_http_url(trim($url), true)) return trim($url);
     return asset('images/placeholder.svg');
 }
 function product_img(array $p): string { return img_src($p['image_path'] ?? null, $p['image_url'] ?? null); }
