@@ -7,18 +7,14 @@ $goUrl = $isBlog ? $affUrl : url('ir/' . (int)$p['id']);
 $btnText = $isBlog ? '🔍 Veja nossa análise' : '🛒 Confira Oferta';
 $btnAttr = $isBlog ? '' : 'rel="sponsored nofollow noopener" target="_blank"';
 
-$imgSrc = $p['image_path'] ?? $p['image_url'] ?? '';
-$imgSrc = trim($imgSrc);
-if (strpos($imgSrc, 'https://lootgamer.xll.com.br') === 0) {
-    $imgSrc = str_replace('https://lootgamer.xll.com.br', '', $imgSrc);
-}
-if ($imgSrc && $imgSrc[0] !== '/') $imgSrc = '/' . $imgSrc;
-if (!$imgSrc) $imgSrc = '[STRIPPED 66 bytes].webp';
+// Usa a mesma função das demais páginas: aceita imagem local, URL externa
+// e aplica o placeholder quando o produto não possui imagem válida.
+$imgSrc = product_img($p);
 ?>
 <article class="card">
   <a class="card-img" href="<?= e($goUrl) ?>">
     <?php if ($badge): ?><span class="badge-off"><?= e($badge) ?></span><?php endif; ?>
-    <img src="<?= e($imgSrc) ?>" alt="<?= e($p['name']) ?>" loading="lazy">
+    <img src="<?= e($imgSrc) ?>" alt="<?= e($p['name']) ?>" loading="lazy" data-fallback>
   </a>
   <div class="card-body">
     <h3 class="card-title"><a href="<?= e($goUrl) ?>"><?= e($p['name']) ?></a></h3>
