@@ -1,16 +1,295 @@
 <?php
-require_once __DIR__ . '/../includes/bootstrap.php';
-$SECRET_TOKEN = 'L00tG4m3r_Xll_2026_9xP4_k7s!';
-header('Content-Type: application/json; charset=utf-8');
-function json_out($data,$code=200){http_response_code($code);echo json_encode($data,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);exit;}
-$token=$_GET['token']??'';if($token!==$SECRET_TOKEN)json_out(['ok'=>false,'error'=>'token invalido'],401);
-$raw=file_get_contents('php://input');$input=json_decode($raw,true);if(!$input)json_out(['ok'=>false,'error'=>'JSON invalido'],400);
-$name=trim($input['name']??$input['nome_produto']??'');$slug=trim($input['slug']??'');$price=$input['price']??$input['preco_promocao']??$input['preco']??null;$old_price=$input['old_price']??$input['preco_antes']??null;$promo_text=trim($input['promo_text']??$input['botao_card']??'Veja nossa análise');$affiliate_url=trim($input['affiliate_url']??$input['link_afiliado_ml']??$input['link_blog']??'');$image_base64=$input['image_base64']??$input['featured_image_base64']??'';$image_url=trim($input['image_url']??$input['link_imagem_produto']??'');$short_desc=trim($input['short_description']??$input['descricao_produto']??'');$description=$input['description']??$input['content']??'';$brand=trim($input['brand']??$input['marca']??'');$category_name=trim($input['category_name']??$input['categoria_blog']??'Games');$seo_title=trim($input['seo_title']??'');$meta_description=trim($input['meta_description']??'');$status=$input['status']??'publicado';if($name==='')json_out(['ok'=>false,'error'=>'name obrigatorio'],400);
-function parse_money_br($v){if($v===null||$v==='')return null;if(is_numeric($v))return(float)$v;$v=trim((string)$v);$v=str_replace(['R$',' '],'',$v);$v=str_replace('.','',$v);$v=str_replace(',','.',$v);return is_numeric($v)?(float)$v:null;}
-$price_f=parse_money_br($price);$old_price_f=parse_money_br($old_price);if($promo_text==='Veja nossa análise'&&$price_f&&$old_price_f&&$old_price_f>$price_f){$perc=round((1-$price_f/$old_price_f)*100);$promo_text=$perc.'% OFF - Veja análise';}
-function slugify_br($s){$s=iconv('UTF-8','ASCII//TRANSLIT',$s);$s=strtolower($s);$s=preg_replace('/[^a-z0-9]+/','-',$s);$s=trim($s,'-');return $s?:'produto';}
-$slugBase=$slug!==''?slugify_br($slug):slugify_br($name);$slugFinal=$slugBase;$i=1;while(q('SELECT id FROM products WHERE slug=?',[$slugFinal])->fetch()){$i++;$slugFinal=$slugBase.'-'.$i;}
-$category_id=null;if($category_name!==''){$cat=q('SELECT id FROM categories WHERE name=? LIMIT 1',[$category_name])->fetch();if($cat)$category_id=$cat['id'];else{q('INSERT INTO categories (name,slug) VALUES (?,?)',[$category_name,slugify_br($category_name)]);$category_id=(int)db()->lastInsertId();}}
-$image_path=null;if($image_base64!==''){if(strpos($image_base64,'base64,')!==false)$image_base64=explode('base64,',$image_base64,2)[1];$bin=base64_decode($image_base64);if($bin){$dir=__DIR__.'/../uploads/products/'.date('Y/m/');if(!is_dir($dir))mkdir($dir,0775,true);$fname=slugify_br($name).'-'.substr(md5(uniqid()),0,8).'.webp';$full=$dir.$fname;file_put_contents($full,$bin);$image_path='/uploads/products/'.date('Y/m/').$fname;}}
-if($seo_title==='')$seo_title=$name.' - '.($price?'R$ '.number_format($price_f,2,',','.'):'').' | Loot Gamer';if($meta_description==='')$meta_description=$short_desc?:substr(strip_tags($description),0,150);
-try{q('INSERT INTO products (category_id,name,slug,short_description,description,brand,price,old_price,promo_text,image_path,image_url,affiliate_url,is_featured,is_promo,is_recommended,status,sort_order,seo_title,meta_description) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',[$category_id,$name,$slugFinal,$short_desc?:null,$description?:null,$brand?:null,$price_f,$old_price_f,$promo_text?:null,$image_path,$image_url?:null,$affiliate_url?:null,1,1,0,$status,0,$seo_title?:null,$meta_description?:null]);$id=(int)db()->lastInsertId();json_out(['ok'=>true,'id'=>$id,'slug'=>$slugFinal,'url'=>'/produto/'.$slugFinal,'image'=>$image_path?:$image_url,'price'=>$price_f,'old_price'=>$old_price_f,'promo_text'=>$promo_text,'affiliate_url'=>$affiliate_url]);}catch(Throwable $e){json_out(['ok'=>false,'error'=>$e->getMessage()],500);}
+require_once __DIR__ . '/../includes/auth.php';
+$me = require_admin();
+
+$id = max(0, (int)($_GET['id'] ?? 0));
+$p = $id ? q('SELECT * FROM products WHERE id = ?', [$id])->fetch() : null;
+if ($id && !$p) {
+    flash('err', 'Produto não encontrado.');
+    redirect('products.php');
+}
+
+$categories = q('SELECT id, name FROM categories ORDER BY is_main DESC, sort_order, name')->fetchAll();
+$stores = q('SELECT id, name FROM affiliate_stores ORDER BY is_active DESC, name')->fetchAll();
+
+$defaults = [
+    'category_id' => '',
+    'store_id' => '',
+    'name' => '',
+    'slug' => '',
+    'short_description' => '',
+    'description' => '',
+    'brand' => '',
+    'model' => '',
+    'price' => '',
+    'old_price' => '',
+    'promo_text' => '',
+    'image_path' => '',
+    'image_url' => '',
+    'affiliate_url' => '',
+    'is_featured' => 0,
+    'is_promo' => 0,
+    'is_recommended' => 0,
+    'status' => 'rascunho',
+    'sort_order' => 0,
+    'seo_title' => '',
+    'meta_description' => '',
+];
+$d = $p ? array_merge($defaults, $p) : $defaults;
+$errors = [];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_check();
+
+    $f = [];
+    foreach (['name', 'slug', 'short_description', 'description', 'brand', 'model', 'promo_text', 'image_url', 'affiliate_url', 'seo_title', 'meta_description'] as $key) {
+        $f[$key] = trim((string)($_POST[$key] ?? ''));
+    }
+
+    $f['category_id'] = (int)($_POST['category_id'] ?? 0);
+    $f['store_id'] = (int)($_POST['store_id'] ?? 0);
+    $f['price'] = parse_money((string)($_POST['price'] ?? ''));
+    $f['old_price'] = parse_money((string)($_POST['old_price'] ?? ''));
+    $f['status'] = in_array($_POST['status'] ?? '', ['rascunho', 'publicado', 'inativo'], true) ? $_POST['status'] : 'rascunho';
+    $f['sort_order'] = (int)($_POST['sort_order'] ?? 0);
+    $f['is_featured'] = !empty($_POST['is_featured']) ? 1 : 0;
+    $f['is_promo'] = !empty($_POST['is_promo']) ? 1 : 0;
+    $f['is_recommended'] = !empty($_POST['is_recommended']) ? 1 : 0;
+
+    if ($f['name'] === '' || mb_strlen($f['name']) > 190) $errors[] = 'Informe o nome do produto (até 190 caracteres).';
+    if (mb_strlen($f['short_description']) > 300) $errors[] = 'A descrição curta deve ter no máximo 300 caracteres.';
+    if (mb_strlen($f['brand']) > 80 || mb_strlen($f['model']) > 80) $errors[] = 'Marca e modelo devem ter no máximo 80 caracteres.';
+    if (mb_strlen($f['promo_text']) > 60) $errors[] = 'O texto promocional deve ter no máximo 60 caracteres.';
+    if (mb_strlen($f['seo_title']) > 160) $errors[] = 'O título SEO deve ter no máximo 160 caracteres.';
+    if (mb_strlen($f['meta_description']) > 255) $errors[] = 'A meta description deve ter no máximo 255 caracteres.';
+    if ($f['image_url'] !== '' && !valid_http_url($f['image_url'], true)) $errors[] = 'O link da imagem deve ser uma URL HTTPS válida.';
+    if ($f['affiliate_url'] !== '' && !valid_http_url($f['affiliate_url'])) $errors[] = 'Informe um link de afiliado válido (HTTP ou HTTPS).';
+
+    $categoryIds = array_map('intval', array_column($categories, 'id'));
+    $storeIds = array_map('intval', array_column($stores, 'id'));
+    if ($f['category_id'] && !in_array($f['category_id'], $categoryIds, true)) $errors[] = 'A categoria selecionada não existe.';
+    if ($f['store_id'] && !in_array($f['store_id'], $storeIds, true)) $errors[] = 'A loja selecionada não existe.';
+
+    $slugBase = slugify($f['slug'] !== '' ? $f['slug'] : $f['name']);
+    $slug = unique_slug('products', $slugBase, $id);
+
+    $newImage = null;
+    if (!$errors) {
+        try {
+            $newImage = upload_image('image_file', 'products');
+        } catch (RuntimeException $ex) {
+            $errors[] = $ex->getMessage();
+        }
+    }
+
+    if (!$errors) {
+        $oldImage = $p['image_path'] ?? null;
+        $imagePath = $oldImage;
+        $imageUrl = $f['image_url'] !== '' ? $f['image_url'] : null;
+
+        if ($newImage) {
+            $imagePath = $newImage;
+        } elseif (!empty($_POST['remove_image'])) {
+            $imagePath = null;
+            $imageUrl = null;
+        } elseif ($imageUrl !== '') {
+            // Quando uma URL nova é informada, ela passa a ser a imagem principal.
+            $imagePath = null;
+        }
+
+        $values = [
+            $f['category_id'] ?: null,
+            $f['store_id'] ?: null,
+            $f['name'],
+            $slug,
+            $f['short_description'] ?: null,
+            $f['description'] ?: null,
+            $f['brand'] ?: null,
+            $f['model'] ?: null,
+            $f['price'],
+            $f['old_price'],
+            $f['promo_text'] ?: null,
+            $imagePath,
+            $imageUrl,
+            $f['affiliate_url'] ?: null,
+            $f['is_featured'],
+            $f['is_promo'],
+            $f['is_recommended'],
+            $f['status'],
+            $f['sort_order'],
+            $f['seo_title'] ?: null,
+            $f['meta_description'] ?: null,
+        ];
+
+        try {
+            if ($id) {
+                $sql = 'UPDATE products SET category_id=?, store_id=?, name=?, slug=?, short_description=?, description=?, brand=?, model=?, price=?, old_price=?, promo_text=?, image_path=?, image_url=?, affiliate_url=?, is_featured=?, is_promo=?, is_recommended=?, status=?, sort_order=?, seo_title=?, meta_description=? WHERE id=?';
+                q($sql, array_merge($values, [$id]));
+                $action = 'produto_editado';
+                $message = 'Produto atualizado com sucesso.';
+            } else {
+                $sql = 'INSERT INTO products (category_id,store_id,name,slug,short_description,description,brand,model,price,old_price,promo_text,image_path,image_url,affiliate_url,is_featured,is_promo,is_recommended,status,sort_order,seo_title,meta_description) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
+                q($sql, $values);
+                $id = (int)db()->lastInsertId();
+                $action = 'produto_criado';
+                $message = 'Produto criado com sucesso.';
+            }
+
+            if ($oldImage && $oldImage !== $imagePath) delete_upload_if_unused($oldImage);
+            log_admin($action, $f['name'] . ' #' . $id);
+            flash('ok', $message);
+            redirect('product-edit.php?id=' . $id);
+        } catch (Throwable $ex) {
+            error_log('product-edit: ' . $ex->getMessage());
+            $errors[] = 'Não foi possível salvar o produto. Confira os dados e tente novamente.';
+        }
+    }
+
+    $d = array_merge($d, $f, [
+        'slug' => $slug,
+        'image_path' => $newImage ?: ($p['image_path'] ?? ''),
+        'image_url' => $f['image_url'],
+    ]);
+}
+
+$isNew = !$p && !$id;
+$title = $isNew ? 'Novo produto' : 'Editar produto';
+$actions = $p
+    ? '<a class="btn ghost" target="_blank" href="' . e(url('produto/' . $p['slug'])) . '">Ver produto ↗</a>'
+    : '<a class="btn ghost" href="products.php">Voltar aos produtos</a>';
+$previewSrc = ($d['image_path'] || $d['image_url']) ? product_img($d) : asset('images/placeholder.svg');
+$priceValue = $d['price'] !== null && $d['price'] !== '' ? number_format((float)$d['price'], 2, '.', '') : '';
+$oldPriceValue = $d['old_price'] !== null && $d['old_price'] !== '' ? number_format((float)$d['old_price'], 2, '.', '') : '';
+
+require __DIR__ . '/_head.php';
+?>
+<?php if ($errors): ?>
+<div class="alert alert-err"><?= implode('<br>', array_map('e', $errors)) ?></div>
+<?php endif; ?>
+
+<form method="post" enctype="multipart/form-data" class="blog-form">
+<?= csrf_field() ?>
+<div class="blog-layout">
+  <div class="blog-main">
+    <section class="box">
+      <h2>Informações do produto</h2>
+      <label class="fld">Nome do produto
+        <input name="name" required maxlength="190" value="<?= e($d['name']) ?>" placeholder="Ex.: Headset Gamer sem fio">
+      </label>
+      <label class="fld">URL amigável (slug)
+        <div class="slug-row"><span>/produto/</span><input name="slug" maxlength="210" value="<?= e($d['slug']) ?>" placeholder="gerado a partir do nome"></div>
+        <small class="hint">Use letras minúsculas, números e hífens. O sistema evita URLs duplicadas.</small>
+      </label>
+      <label class="fld">Descrição curta
+        <textarea name="short_description" rows="3" maxlength="300" placeholder="Resumo que aparece na página do produto."><?= e($d['short_description']) ?></textarea>
+      </label>
+      <label class="fld">Descrição completa
+        <textarea name="description" rows="9" placeholder="Detalhes, características, compatibilidade e informações úteis para o comprador."><?= e($d['description']) ?></textarea>
+      </label>
+      <div class="f2">
+        <label class="fld">Marca
+          <input name="brand" maxlength="80" value="<?= e($d['brand']) ?>">
+        </label>
+        <label class="fld">Modelo
+          <input name="model" maxlength="80" value="<?= e($d['model']) ?>">
+        </label>
+      </div>
+    </section>
+
+    <section class="box">
+      <h2>Preço e promoção</h2>
+      <div class="f3">
+        <label class="fld">Preço atual (R$)
+          <input type="number" name="price" min="0" max="99999999.99" step="0.01" value="<?= e($priceValue) ?>" placeholder="0,00">
+        </label>
+        <label class="fld">Preço anterior (R$)
+          <input type="number" name="old_price" min="0" max="99999999.99" step="0.01" value="<?= e($oldPriceValue) ?>" placeholder="0,00">
+        </label>
+        <label class="fld">Texto promocional
+          <input name="promo_text" maxlength="60" value="<?= e($d['promo_text']) ?>" placeholder="Ex.: 20% OFF">
+        </label>
+      </div>
+      <p class="hint">O preço e a disponibilidade devem ser conferidos na loja parceira antes da compra.</p>
+    </section>
+
+    <section class="box">
+      <h2>Imagem e link de afiliado</h2>
+      <label class="fld">URL da imagem (HTTPS)
+        <input type="url" name="image_url" value="<?= e($d['image_url']) ?>" placeholder="https://...">
+      </label>
+      <label class="fld">Enviar imagem do computador
+        <input type="file" name="image_file" accept="image/jpeg,image/png,image/webp,image/gif">
+        <small class="hint">JPG, PNG, WEBP ou GIF, até 3 MB. A imagem enviada substitui a imagem principal atual.</small>
+      </label>
+      <?php if (!empty($d['image_path']) || !empty($d['image_url'])): ?>
+      <label class="chk"><input type="checkbox" name="remove_image" value="1"> Remover imagem atual</label>
+      <?php endif; ?>
+      <label class="fld">Link de afiliado
+        <input type="url" name="affiliate_url" value="<?= e($d['affiliate_url']) ?>" placeholder="https://loja-parceira.com/produto?...">
+        <small class="hint">Este link será aberto pelo botão de oferta na página individual do produto.</small>
+      </label>
+    </section>
+
+    <section class="box">
+      <h2>SEO do produto</h2>
+      <label class="fld">Título SEO
+        <input name="seo_title" maxlength="160" value="<?= e($d['seo_title']) ?>" placeholder="Nome do produto + benefício | Loot Gamer">
+      </label>
+      <label class="fld">Meta description
+        <textarea name="meta_description" rows="3" maxlength="255" placeholder="Resumo original e informativo da página do produto."><?= e($d['meta_description']) ?></textarea>
+      </label>
+    </section>
+  </div>
+
+  <aside class="blog-side">
+    <section class="box">
+      <h2>Publicação</h2>
+      <div class="formgrid">
+        <label>Categoria
+          <select name="category_id">
+            <option value="">Sem categoria</option>
+            <?php foreach ($categories as $c): ?>
+              <option value="<?= (int)$c['id'] ?>" <?= (string)$d['category_id'] === (string)$c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label>Loja afiliada
+          <select name="store_id">
+            <option value="">Sem loja vinculada</option>
+            <?php foreach ($stores as $s): ?>
+              <option value="<?= (int)$s['id'] ?>" <?= (string)$d['store_id'] === (string)$s['id'] ? 'selected' : '' ?>><?= e($s['name']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label>Status
+          <select name="status">
+            <?php foreach (['rascunho' => 'Rascunho', 'publicado' => 'Publicado', 'inativo' => 'Inativo'] as $v => $label): ?>
+              <option value="<?= $v ?>" <?= $d['status'] === $v ? 'selected' : '' ?>><?= e($label) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label>Ordem de exibição
+          <input type="number" name="sort_order" value="<?= (int)$d['sort_order'] ?>">
+        </label>
+      </div>
+      <hr style="border:0;border-top:1px solid #eef0f7;margin:14px 0">
+      <div class="formgrid">
+        <label class="chk"><input type="checkbox" name="is_featured" value="1" <?= !empty($d['is_featured']) ? 'checked' : '' ?>> Produto em destaque</label>
+        <label class="chk"><input type="checkbox" name="is_promo" value="1" <?= !empty($d['is_promo']) ? 'checked' : '' ?>> Produto em promoção</label>
+        <label class="chk"><input type="checkbox" name="is_recommended" value="1" <?= !empty($d['is_recommended']) ? 'checked' : '' ?>> Produto recomendado</label>
+      </div>
+      <div class="actionsbar" style="margin-top:16px">
+        <button class="btn" type="submit">💾 Salvar produto</button>
+        <a class="btn ghost" href="products.php">Cancelar</a>
+      </div>
+    </section>
+
+    <section class="box">
+      <h2>Imagem principal</h2>
+      <div class="feat-prev"><img src="<?= e($previewSrc) ?>" alt="<?= e($d['name']) ?>"></div>
+      <small class="hint">Pré-visualização da imagem cadastrada.</small>
+    </section>
+  </aside>
+</div>
+</form>
+<?php require __DIR__ . '/_foot.php';
