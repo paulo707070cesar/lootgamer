@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 $me = require_admin();
 $cur = basename($_SERVER['SCRIPT_NAME']);
-$menu = ['dashboard.php' => '📊 Dashboard', 'products.php' => '🎮 Produtos', 'categories.php' => '🗂️ Categorias', 'stores.php' => '🏬 Lojas/Afiliados', 'banners.php' => '🖼️ Banners', 'clicks.php' => '🖱️ Cliques', 'pages.php' => '📄 Páginas', 'blog.php' => '✍️ Blog', 'messages.php' => '✉️ Mensagens', 'newsletter.php' => '📰 Newsletter', 'settings.php' => '⚙️ Configurações', 'logs.php' => '🧾 Logs'];
+$menu = ['dashboard.php' => '📊 Dashboard', 'products.php' => '🎮 Produtos', 'categories.php' => '🗂️ Categorias', 'stores.php' => '🏬 Lojas/Afiliados', 'banners.php' => '🖼️ Banners', 'clicks.php' => '🖱️ Cliques', 'pages.php' => '📄 Páginas', 'blog.php' => '✍️ Blog', 'messages.php' => '✉️ Mensagens', 'newsletter.php' => '📰 Newsletter', 'settings.php' => '⚙️ Configurações', 'logs.php' => '🧾 Logs', 'google-sheets.php' => '📊 Google Sheets'];
 header('X-Robots-Tag: noindex, nofollow');
 ?><!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
 <title><?= e($title ?? 'Admin') ?> · Loot Gamer</title><link rel="stylesheet" href="<?= asset('css/admin.css') ?>?v=2"></head><body>
