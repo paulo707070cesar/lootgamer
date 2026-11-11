@@ -1,6 +1,6 @@
 <?php
 /** Card de artigo do blog. Variável: $post */
-$img = !empty($post['featured_image']) ? url($post['featured_image']) : asset('images/placeholder.svg');
+$img = !empty($post['featured_image']) ? img_src($post['featured_image']) : asset('images/placeholder.svg');
 $alt = $post['featured_alt'] ?: $post['title'];
 $mins = reading_minutes(word_count((string)$post['content']));
 $date = $post['published_at'] ?: $post['created_at'];
