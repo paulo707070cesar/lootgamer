@@ -22,7 +22,24 @@ $navMap = [['jogos-digitais', '🎮', 'Games'], ['consoles', '🕹️', 'Console
 <meta property="og:url" content="<?= e($canonical) ?>">
 <?php if ($ogImage): ?><meta property="og:image" content="<?= e($ogImage) ?>"><?php endif; ?>
 <meta name="twitter:card" content="<?= $ogImage ? 'summary_large_image' : 'summary' ?>">
-<?php if (setting('favicon_path')): ?><link rel="icon" href="<?= e(url(setting('favicon_path'))) ?>"><?php endif; ?>
+<?php
+$faviconPath = setting('favicon_path');
+if ($faviconPath !== ''):
+    $faviconUrl = url($faviconPath);
+?>
+<link rel="icon" href="<?= e($faviconUrl) ?>" type="image/png">
+<link rel="shortcut icon" href="<?= e($faviconUrl) ?>">
+<?php endif; ?>
+<?php
+$siteSchema = [
+    '@context' => 'https://schema.org',
+    '@type' => 'WebSite',
+    'name' => $siteName,
+    'alternateName' => 'Loot Gamer',
+    'url' => ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? '') . '/')
+];
+?>
+<script type="application/ld+json"><?= json_encode($siteSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <?php if (!empty($robotsNoindex) || !empty($robotsNofollow)): ?><meta name="robots" content="<?= !empty($robotsNoindex) ? 'noindex' : 'index' ?>,<?= !empty($robotsNofollow) ? 'nofollow' : 'follow' ?>"><?php endif; ?>
 <meta name="theme-color" content="#0a1440">
 <link rel="stylesheet" href="<?= asset('css/style.css') ?>?v=4">
