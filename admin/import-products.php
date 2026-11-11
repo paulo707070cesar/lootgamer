@@ -17,61 +17,78 @@ function lg_xlsx_rows(string $file): array {
     $read = static function($z, $path) {
         $v = $z->getFromName($path);
         if ($v === false) throw new RuntimeException('Planilha XLSX inválida ou incompleta.');
-        return simplexml_load_string($v);
+        $xml = simplexml_load_string($v);
+        if (!$xml) throw new RuntimeException('Não foi possível interpretar a estrutura interna do XLSX.');
+        return $xml;
     };
-    $ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
-    $wb = $read($zip, 'xl/workbook.xml');
-    $rels = $read($zip, 'xl/_rels/workbook.xml.rels')->children('http://schemas.openxmlformats.org/package/2006/relationships');
-    $sheetPath = '';
-    $sheets = $wb->children($ns)->sheets->children($ns);
-    foreach ($sheets as $sh) {
-        if ((string)$sh['name'] === 'Produtos') {
-            $rid = (string)$sh->attributes('http://schemas.openxmlformats.org/officeDocument/2006/relationships')['id'];
-            foreach ($rels->Relationship as $rel) {
-                if ((string)$rel['Id'] === $rid) {
-                    $target = ltrim((string)$rel['Target'], '/');
-                    $sheetPath = str_starts_with($target, 'xl/') ? $target : 'xl/' . $target;
-                    break 2;
-                }
+    try {
+        $wb = $read($zip, 'xl/workbook.xml');
+        $rels = $read($zip, 'xl/_rels/workbook.xml.rels');
+        $sheetRid = '';
+        foreach ($wb->xpath('//*[local-name()="sheet"]') ?: [] as $sh) {
+            if ((string)$sh['name'] === 'Produtos') {
+                $attrs = $sh->attributes('http://schemas.openxmlformats.org/officeDocument/2006/relationships');
+                $sheetRid = (string)($attrs['id'] ?? '');
+                break;
             }
         }
-    }
-    if (!$sheetPath) { $zip->close(); throw new RuntimeException('Não encontrei a aba Produtos dentro do arquivo.'); }
-    $shared = [];
-    if ($zip->locateName('xl/sharedStrings.xml') !== false) {
-        $ss = $read($zip, 'xl/sharedStrings.xml')->children($ns);
-        foreach ($ss->si as $si) {
-            $txt = '';
-            $si->registerXPathNamespace('m', $ns);
-            foreach ($si->xpath('.//m:t') ?: [] as $t) $txt .= (string)$t;
-            $shared[] = $txt;
+        if ($sheetRid === '') throw new RuntimeException('Não encontrei a aba Produtos dentro do arquivo.');
+        $sheetPath = '';
+        foreach ($rels->xpath('//*[local-name()="Relationship"]') ?: [] as $rel) {
+            if ((string)$rel['Id'] === $sheetRid) {
+                $target = str_replace('\\', '/', (string)$rel['Target']);
+                if (str_starts_with($target, '/')) $sheetPath = ltrim($target, '/');
+                else $sheetPath = 'xl/' . ltrim($target, '/');
+                $sheetPath = preg_replace('~^xl/xl/~', 'xl/', $sheetPath);
+                break;
+            }
         }
-    }
-    $sheet = $read($zip, $sheetPath)->children($ns);
-    $rows = [];
-    foreach ($sheet->sheetData->row as $row) {
-        $line = [];
-        foreach ($row->c as $cell) {
-            $idx = lg_cell_col((string)$cell['r']);
-            $type = (string)$cell['t'];
-            $v = '';
-            if ($type === 's') $v = $shared[(int)$cell->v] ?? '';
-            elseif ($type === 'inlineStr') {
-                $cell->registerXPathNamespace('m', $ns);
-                foreach ($cell->xpath('.//m:t') ?: [] as $t) $v .= (string)$t;
-            } else $v = isset($cell->v) ? (string)$cell->v : '';
-            $line[$idx] = $v;
+        if (!$sheetPath || $zip->locateName($sheetPath) === false) throw new RuntimeException('Não foi possível localizar os dados da aba Produtos no XLSX.');
+        $shared = [];
+        if ($zip->locateName('xl/sharedStrings.xml') !== false) {
+            $ss = $read($zip, 'xl/sharedStrings.xml');
+            foreach ($ss->xpath('//*[local-name()="si"]') ?: [] as $si) {
+                $txt = '';
+                foreach ($si->xpath('.//*[local-name()="t"]') ?: [] as $t) $txt .= (string)$t;
+                $shared[] = $txt;
+            }
         }
-        if ($line) {
-            $max = max(array_keys($line));
-            $ordered = [];
-            for ($i=0; $i<=$max; $i++) $ordered[] = $line[$i] ?? '';
-            $rows[] = $ordered;
+        $sheet = $read($zip, $sheetPath);
+        $rows = [];
+        foreach ($sheet->xpath('//*[local-name()="sheetData"]/*[local-name()="row"]') ?: [] as $row) {
+            $line = [];
+            foreach ($row->xpath('./*[local-name()="c"]') ?: [] as $cell) {
+                $ref = strtoupper((string)$cell['r']);
+                preg_match('/^[A-Z]+/', $ref, $m);
+                $idx = 0;
+                foreach (str_split($m[0] ?? 'A') as $ch) $idx = $idx * 26 + ord($ch) - 64;
+                $idx--;
+                $type = (string)$cell['t'];
+                $v = '';
+                if ($type === 's') {
+                    $vNode = $cell->xpath('./*[local-name()="v"]');
+                    $v = $shared[(int)($vNode[0] ?? -1)] ?? '';
+                } elseif ($type === 'inlineStr') {
+                    foreach ($cell->xpath('.//*[local-name()="t"]') ?: [] as $t) $v .= (string)$t;
+                } else {
+                    $vNode = $cell->xpath('./*[local-name()="v"]');
+                    $v = isset($vNode[0]) ? (string)$vNode[0] : '';
+                }
+                $line[$idx] = $v;
+            }
+            if ($line) {
+                $ordered = [];
+                for ($i=0, $max=max(array_keys($line)); $i<=$max; $i++) $ordered[] = $line[$i] ?? '';
+                $rows[] = $ordered;
+            }
         }
+        if (!$rows) throw new RuntimeException('A aba Produtos foi encontrada, mas não contém linhas legíveis.');
+        return $rows;
+    } finally {
+        $zip->close();
     }
-    $zip->close();
-    return $rows;
 }
+
 function lg_csv_rows(string $file): array {
     $fh = fopen($file, 'rb');
     if (!$fh) throw new RuntimeException('Não foi possível ler o CSV.');
