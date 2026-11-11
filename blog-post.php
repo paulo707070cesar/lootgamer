@@ -22,7 +22,8 @@ $robotsNofollow = (bool)$p['robots_nofollow'];
 $ogType = 'article';
 $ogTitle = $p['og_title'] ?: $pageTitle;
 $ogDesc = $p['og_description'] ?: $metaDesc;
-$imgAbs = !empty($p['featured_image']) ? $host . url($p['featured_image']) : null;
+$imgSrc = !empty($p['featured_image']) ? img_src($p['featured_image']) : null;
+$imgAbs = $imgSrc ? (preg_match('~^https?://~i', $imgSrc) ? $imgSrc : $host . $imgSrc) : null;
 $ogImage = $p['og_image_url'] ?: $imgAbs;
 
 $extraHead = '<meta property="article:published_time" content="' . e(date('c', strtotime($published))) . '">'
@@ -76,7 +77,7 @@ include ROOT . '/includes/header.php';
     <?php if ($p['excerpt']): ?><p class="post-lead" itemprop="description"><?= e($p['excerpt']) ?></p><?php endif; ?>
   </header>
   <?php if ($imgAbs): ?>
-  <figure class="post-figure wrap"><img src="<?= e(url($p['featured_image'])) ?>" alt="<?= e($p['featured_alt'] ?: $p['title']) ?>" width="1200" height="630" fetchpriority="high" itemprop="image"></figure>
+  <figure class="post-figure wrap"><img src="<?= e($imgSrc) ?>" alt="<?= e($p['featured_alt'] ?: $p['title']) ?>" width="1200" height="630" fetchpriority="high" itemprop="image"></figure>
   <?php endif; ?>
   <div class="wrap post-wrap">
     <div class="post-body" itemprop="articleBody"><?= blog_html((string)$p['content']) /* HTML ou texto escrito pelo administrador */ ?></div>
