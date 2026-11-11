@@ -21,7 +21,7 @@ function lg_xlsx_rows(string $file): array {
     };
     $ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
     $wb = $read($zip, 'xl/workbook.xml');
-    $rels = $read($zip, 'xl/_rels/workbook.xml.rels');
+    $rels = $read($zip, 'xl/_rels/workbook.xml.rels')->children('http://schemas.openxmlformats.org/package/2006/relationships');
     $sheetPath = '';
     $sheets = $wb->children($ns)->sheets->children($ns);
     foreach ($sheets as $sh) {
@@ -42,6 +42,7 @@ function lg_xlsx_rows(string $file): array {
         $ss = $read($zip, 'xl/sharedStrings.xml')->children($ns);
         foreach ($ss->si as $si) {
             $txt = '';
+            $si->registerXPathNamespace('m', $ns);
             foreach ($si->xpath('.//m:t') ?: [] as $t) $txt .= (string)$t;
             $shared[] = $txt;
         }
@@ -56,6 +57,7 @@ function lg_xlsx_rows(string $file): array {
             $v = '';
             if ($type === 's') $v = $shared[(int)$cell->v] ?? '';
             elseif ($type === 'inlineStr') {
+                $cell->registerXPathNamespace('m', $ns);
                 foreach ($cell->xpath('.//m:t') ?: [] as $t) $v .= (string)$t;
             } else $v = isset($cell->v) ? (string)$cell->v : '';
             $line[$idx] = $v;
