@@ -84,8 +84,9 @@ function lg_csv_rows(string $file): array {
     if (isset($rows[0][0])) $rows[0][0] = preg_replace('/^\xEF\xBB\xBF/', '', (string)$rows[0][0]);
     return $rows;
 }
-function lg_bool($v): int {
+function lg_bool($v): ?int {
     $s = mb_strtolower(trim((string)$v));
+    if ($s === '') return null;
     return in_array($s, ['1','sim','yes','true','publicado','publicar','destaque','ativo'], true) ? 1 : 0;
 }
 function lg_money($v): ?string {
@@ -109,8 +110,8 @@ function lg_map_rows(array $raw): array {
         foreach ($headers as $i => $h) if ($h !== '') $r[$h] = $line[$i] ?? '';
         $name = trim((string)($r['Nome_Produto'] ?? ''));
         if ($name === '') continue;
-        $statusRaw = mb_strtolower(trim((string)($r['Status'] ?? $r['Status_Banco'] ?? 'rascunho')));
-        $status = in_array($statusRaw, ['publicar','publicado','ativo','sim'], true) ? 'publicado' : (in_array($statusRaw, ['inativo','desativado'], true) ? 'inativo' : 'rascunho');
+        $statusRaw = mb_strtolower(trim((string)($r['Status'] ?? $r['Status_Banco'] ?? '')));
+        $status = $statusRaw === '' ? null : (in_array($statusRaw, ['publicar','publicado','ativo','sim'], true) ? 'publicado' : (in_array($statusRaw, ['inativo','desativado'], true) ? 'inativo' : 'rascunho'));
         $imageUrl = lg_url_or_blank($r['Image_URL_Banco'] ?? '');
         if (!$imageUrl) $imageUrl = lg_url_or_blank($r['Imagem_Principal_Drive'] ?? '');
         if (!$imageUrl) $imageUrl = lg_url_or_blank($r['Link_Imagem_Principal_Mercado_Livre'] ?? '');
@@ -120,36 +121,37 @@ function lg_map_rows(array $raw): array {
             $imagePath = '';
         }
         if ($imagePath !== '' && (str_contains($imagePath, '..') || str_starts_with($imagePath, '/'))) $imagePath = '';
-        $slug = slugify(trim((string)($r['Slug'] ?? '')) ?: $name);
+        $slugInput = trim((string)($r['Slug'] ?? ''));
         $out[] = [
             'external_id' => (int)($r['ID_Banco'] ?? 0),
             'name' => mb_substr($name, 0, 190),
-            'slug' => mb_substr($slug, 0, 210),
+            'slug' => $slugInput !== '' ? mb_substr(slugify($slugInput), 0, 210) : null,
             'category' => mb_substr(trim((string)($r['Categoria'] ?? '')), 0, 120),
             'store' => mb_substr(trim((string)($r['Loja'] ?? '')), 0, 120),
-            'brand' => mb_substr(trim((string)($r['Marca'] ?? '')), 0, 80),
-            'model' => mb_substr(trim((string)($r['Modelo'] ?? '')), 0, 80),
-            'short_description' => mb_substr(trim((string)($r['Descricao_Curta'] ?? '')), 0, 300),
-            'description' => trim((string)($r['Descricao_Completa'] ?? '')),
+            'brand' => mb_substr(trim((string)($r['Marca'] ?? '')), 0, 80) ?: null,
+            'model' => mb_substr(trim((string)($r['Modelo'] ?? '')), 0, 80) ?: null,
+            'short_description' => mb_substr(trim((string)($r['Descricao_Curta'] ?? '')), 0, 300) ?: null,
+            'description' => trim((string)($r['Descricao_Completa'] ?? '')) ?: null,
             'price' => lg_money($r['Preco_Atual'] ?? ''),
             'old_price' => lg_money($r['Preco_Anterior'] ?? ''),
-            'promo_text' => mb_substr(trim((string)($r['Texto_Promocao'] ?? '')), 0, 60),
-            'image_path' => $imagePath,
-            'image_url' => $imageUrl,
-            'affiliate_url' => lg_url_or_blank($r['Link_Afiliado'] ?? '') ?: lg_url_or_blank($r['Link_Afiliado_Original_Banco'] ?? ''),
+            'promo_text' => mb_substr(trim((string)($r['Texto_Promocao'] ?? '')), 0, 60) ?: null,
+            'image_path' => $imagePath ?: null,
+            'image_url' => $imageUrl ?: null,
+            'affiliate_url' => lg_url_or_blank($r['Link_Afiliado'] ?? '') ?: lg_url_or_blank($r['Link_Afiliado_Original_Banco'] ?? '') ?: null,
             'is_featured' => lg_bool($r['Destaque_Home'] ?? ''),
             'is_promo' => lg_bool($r['Em_Promocao'] ?? ''),
             'is_recommended' => lg_bool($r['Recomendado'] ?? ''),
             'status' => $status,
-            'sort_order' => (int)($r['Ordem'] ?? 0),
-            'seo_title' => mb_substr(trim((string)($r['Titulo_SEO'] ?? '')), 0, 160),
-            'meta_description' => mb_substr(trim((string)($r['Meta_Descricao'] ?? '')), 0, 255),
+            'sort_order' => trim((string)($r['Ordem'] ?? '')) === '' ? null : (int)$r['Ordem'],
+            'seo_title' => mb_substr(trim((string)($r['Titulo_SEO'] ?? '')), 0, 160) ?: null,
+            'meta_description' => mb_substr(trim((string)($r['Meta_Descricao'] ?? '')), 0, 255) ?: null,
         ];
     }
     if (!$out) throw new RuntimeException('Nenhum produto válido foi encontrado. Confira a coluna Nome_Produto.');
     if (count($out) > 1000) throw new RuntimeException('O limite por importação é de 1.000 produtos.');
     return $out;
 }
+
 function lg_find_or_create_category(string $name): ?int {
     if ($name === '') return null;
     $r = q('SELECT id FROM categories WHERE name = ? LIMIT 1', [$name])->fetch();
@@ -172,12 +174,12 @@ function lg_import_products(array $rows): array {
     try {
         foreach ($rows as $i => $r) {
             try {
-                $categoryId = lg_find_or_create_category($r['category']);
-                $storeId = lg_find_or_create_store($r['store']);
                 $existing = null;
                 if ($r['external_id'] > 0) $existing = q('SELECT * FROM products WHERE id=?', [$r['external_id']])->fetch();
-                if (!$existing) $existing = q('SELECT * FROM products WHERE slug=?', [$r['slug']])->fetch();
-                $slug = $r['slug'];
+                if (!$existing && !empty($r['slug'])) $existing = q('SELECT * FROM products WHERE slug=?', [$r['slug']])->fetch();
+                $categoryId = $r['category'] !== '' ? lg_find_or_create_category($r['category']) : null;
+                $storeId = $r['store'] !== '' ? lg_find_or_create_store($r['store']) : null;
+                $slug = $r['slug'] ?: ($existing['slug'] ?? slugify($r['name']));
                 if ($existing && $slug !== $existing['slug']) {
                     $collision = q('SELECT id FROM products WHERE slug=? AND id<>?', [$slug,$existing['id']])->fetch();
                     if ($collision) $slug = $existing['slug'];
@@ -187,18 +189,25 @@ function lg_import_products(array $rows): array {
                 }
                 $imagePath = $r['image_path'] ?: ($existing['image_path'] ?? null);
                 $imageUrl = $r['image_url'] ?: ($existing['image_url'] ?? null);
-                $vals = [
-                    $categoryId, $storeId, $r['name'], $slug,
-                    $r['short_description'] ?: null, $r['description'] ?: null, $r['brand'] ?: null, $r['model'] ?: null,
-                    $r['price'], $r['old_price'], $r['promo_text'] ?: null, $imagePath, $imageUrl,
-                    $r['affiliate_url'] ?: ($existing['affiliate_url'] ?? null),
-                    $r['is_featured'], $r['is_promo'], $r['is_recommended'], $r['status'], $r['sort_order'],
-                    $r['seo_title'] ?: null, $r['meta_description'] ?: null
-                ];
+                $affiliateUrl = $r['affiliate_url'] ?: ($existing['affiliate_url'] ?? null);
                 if ($existing) {
-                    q('UPDATE products SET category_id=?,store_id=?,name=?,slug=?,short_description=?,description=?,brand=?,model=?,price=?,old_price=?,promo_text=?,image_path=?,image_url=?,affiliate_url=?,is_featured=?,is_promo=?,is_recommended=?,status=?,sort_order=?,seo_title=?,meta_description=? WHERE id=?', array_merge($vals, [(int)$existing['id']]));
+                    $vals = [
+                        $categoryId, $storeId, $r['name'], $slug,
+                        $r['short_description'], $r['description'], $r['brand'], $r['model'],
+                        $r['price'], $r['old_price'], $r['promo_text'], $imagePath, $imageUrl, $affiliateUrl,
+                        $r['is_featured'], $r['is_promo'], $r['is_recommended'], $r['status'], $r['sort_order'],
+                        $r['seo_title'], $r['meta_description'], (int)$existing['id']
+                    ];
+                    q('UPDATE products SET category_id=COALESCE(?,category_id),store_id=COALESCE(?,store_id),name=?,slug=?,short_description=COALESCE(?,short_description),description=COALESCE(?,description),brand=COALESCE(?,brand),model=COALESCE(?,model),price=COALESCE(?,price),old_price=COALESCE(?,old_price),promo_text=COALESCE(?,promo_text),image_path=COALESCE(?,image_path),image_url=COALESCE(?,image_url),affiliate_url=COALESCE(?,affiliate_url),is_featured=COALESCE(?,is_featured),is_promo=COALESCE(?,is_promo),is_recommended=COALESCE(?,is_recommended),status=COALESCE(?,status),sort_order=COALESCE(?,sort_order),seo_title=COALESCE(?,seo_title),meta_description=COALESCE(?,meta_description) WHERE id=?', $vals);
                     $updated++;
                 } else {
+                    $vals = [
+                        $categoryId, $storeId, $r['name'], $slug,
+                        $r['short_description'], $r['description'], $r['brand'], $r['model'],
+                        $r['price'], $r['old_price'], $r['promo_text'], $imagePath, $imageUrl, $affiliateUrl,
+                        $r['is_featured'] ?? 0, $r['is_promo'] ?? 0, $r['is_recommended'] ?? 0,
+                        $r['status'] ?? 'rascunho', $r['sort_order'] ?? 0, $r['seo_title'], $r['meta_description']
+                    ];
                     q('INSERT INTO products (category_id,store_id,name,slug,short_description,description,brand,model,price,old_price,promo_text,image_path,image_url,affiliate_url,is_featured,is_promo,is_recommended,status,sort_order,seo_title,meta_description) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', $vals);
                     $created++;
                 }
