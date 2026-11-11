@@ -186,7 +186,10 @@ function render_banner(array $b, string $cls = ''): void {
     $link = !empty($b['link_url']) ? $b['link_url'] : '#';
     $ext = valid_http_url($link) ? ' target="_blank" rel="sponsored nofollow noopener"' : '';
     if ($link !== '#' && !valid_http_url($link)) $link = url(ltrim($link, '/'));
-    echo '<a class="banner ' . e($cls) . '" href="' . e($link) . '"' . $ext . '><img src="' . e($img) . '" alt="' . e($b['internal_title']) . '" loading="lazy" data-fallback>';
+    $isHero = ($b['position'] ?? '') === 'principal';
+    $loading = $isHero ? 'eager' : 'lazy';
+    $priority = $isHero ? ' fetchpriority="high"' : '';
+    echo '<a class="banner ' . e($cls) . '" href="' . e($link) . '"' . $ext . '><img src="' . e($img) . '" alt="' . e($b['internal_title']) . '" loading="' . $loading . '"' . $priority . ' data-fallback>';
     if (!empty($b['main_text']) || !empty($b['secondary_text']) || !empty($b['button_text'])) {
         echo '<span class="banner-txt">';
         if (!empty($b['main_text'])) echo '<strong>' . e($b['main_text']) . '</strong>';
