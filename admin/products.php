@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     redirect($_SERVER['REQUEST_URI']);
 }
-$title = 'Produtos'; $actions = '<a class="btn ghost" href="import-products.php">📥 Importar planilha</a> <a class="btn" href="product-edit.php">+ Novo produto</a>';
+$title = 'Produtos'; $actions = '<a class="btn ghost" href="export-products.php">📤 Exportar planilha</a> <a class="btn ghost" href="import-products.php">📥 Importar planilha</a> <a class="btn" href="product-edit.php">+ Novo produto</a>';
 require __DIR__ . '/_head.php';
 $s = trim($_GET['s'] ?? ''); $st = $_GET['status'] ?? ''; $cat = (int)($_GET['cat'] ?? 0);
 $w = ['1=1']; $pr = [];
