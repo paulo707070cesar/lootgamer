@@ -9,7 +9,7 @@ if ($id && !$p) {
     redirect('products.php');
 }
 
-$categories = q('SELECT id, name FROM categories ORDER BY is_main DESC, sort_order, name')->fetchAll();
+$categories = q('SELECT id, name, parent_id FROM categories WHERE is_active = 1 ORDER BY is_main DESC, sort_order, name')->fetchAll();
 $stores = q('SELECT id, name FROM affiliate_stores ORDER BY is_active DESC, name')->fetchAll();
 
 $defaults = [
@@ -46,7 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $f[$key] = trim((string)($_POST[$key] ?? ''));
     }
 
-    $f['category_id'] = (int)($_POST['category_id'] ?? 0);
+    // O produto fica vinculado à subcategoria quando escolhida; caso contrário, à categoria principal.
+    $parentCategoryId = (int)($_POST['parent_category_id'] ?? 0);
+    $subcategoryId = (int)($_POST['subcategory_id'] ?? 0);
+    $f['category_id'] = $subcategoryId ?: $parentCategoryId;
     $f['store_id'] = (int)($_POST['store_id'] ?? 0);
     $f['price'] = parse_money((string)($_POST['price'] ?? ''));
     $f['old_price'] = parse_money((string)($_POST['old_price'] ?? ''));
@@ -65,9 +68,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($f['image_url'] !== '' && !valid_http_url($f['image_url'], true)) $errors[] = 'O link da imagem deve ser uma URL HTTPS válida.';
     if ($f['affiliate_url'] !== '' && !valid_http_url($f['affiliate_url'])) $errors[] = 'Informe um link de afiliado válido (HTTP ou HTTPS).';
 
-    $categoryIds = array_map('intval', array_column($categories, 'id'));
+    $categoryById = [];
+    foreach ($categories as $category) $categoryById[(int)$category['id']] = $category;
     $storeIds = array_map('intval', array_column($stores, 'id'));
-    if ($f['category_id'] && !in_array($f['category_id'], $categoryIds, true)) $errors[] = 'A categoria selecionada não existe.';
+    if ($parentCategoryId && !isset($categoryById[$parentCategoryId])) $errors[] = 'A categoria selecionada não existe.';
+    if ($subcategoryId && (!isset($categoryById[$subcategoryId]) || (int)$categoryById[$subcategoryId]['parent_id'] !== $parentCategoryId)) $errors[] = 'A subcategoria não pertence à categoria selecionada.';
+    if ($f['category_id'] && !isset($categoryById[$f['category_id']])) $errors[] = 'A categoria selecionada não existe.';
     if ($f['store_id'] && !in_array($f['store_id'], $storeIds, true)) $errors[] = 'A loja selecionada não existe.';
 
     $slugBase = slugify($f['slug'] !== '' ? $f['slug'] : $f['name']);
@@ -245,13 +251,37 @@ require __DIR__ . '/_head.php';
     <section class="box">
       <h2>Publicação</h2>
       <div class="formgrid">
-        <label>Categoria
-          <select name="category_id">
+        <?php
+          $categoryByIdForForm = [];
+          foreach ($categories as $category) $categoryByIdForForm[(int)$category['id']] = $category;
+          $selectedCategory = (int)($d['category_id'] ?? 0);
+          $selectedParent = 0;
+          $selectedSubcategory = 0;
+          if ($selectedCategory && isset($categoryByIdForForm[$selectedCategory])) {
+              $selectedParent = (int)($categoryByIdForForm[$selectedCategory]['parent_id'] ?? 0);
+              if ($selectedParent) $selectedSubcategory = $selectedCategory;
+              else $selectedParent = $selectedCategory;
+          }
+          $parentCategories = array_values(array_filter($categories, static fn($c) => empty($c['parent_id'])));
+          $subcategoriesByParent = [];
+          foreach ($categories as $category) if (!empty($category['parent_id'])) $subcategoriesByParent[(int)$category['parent_id']][] = ['id' => (int)$category['id'], 'name' => $category['name']];
+        ?>
+        <label>Categoria principal
+          <select name="parent_category_id" id="parentCategory">
             <option value="">Sem categoria</option>
-            <?php foreach ($categories as $c): ?>
-              <option value="<?= (int)$c['id'] ?>" <?= (string)$d['category_id'] === (string)$c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option>
+            <?php foreach ($parentCategories as $c): ?>
+              <option value="<?= (int)$c['id'] ?>" <?= $selectedParent === (int)$c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option>
             <?php endforeach; ?>
           </select>
+        </label>
+        <label>Subcategoria
+          <select name="subcategory_id" id="subcategory" <?= $selectedParent ? '' : 'disabled' ?>>
+            <option value="">Nenhuma subcategoria</option>
+            <?php foreach (($subcategoriesByParent[$selectedParent] ?? []) as $sub): ?>
+              <option value="<?= (int)$sub['id'] ?>" <?= $selectedSubcategory === (int)$sub['id'] ? 'selected' : '' ?>><?= e($sub['name']) ?></option>
+            <?php endforeach; ?>
+          </select>
+          <small class="hint">Opcional. Se selecionada, o produto será vinculado à subcategoria.</small>
         </label>
         <label>Loja afiliada
           <select name="store_id">
@@ -292,4 +322,24 @@ require __DIR__ . '/_head.php';
   </aside>
 </div>
 </form>
+<script>
+(function () {
+  const parent = document.getElementById('parentCategory');
+  const child = document.getElementById('subcategory');
+  const children = <?= json_encode($subcategoriesByParent, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+  if (!parent || !child) return;
+  parent.addEventListener('change', function () {
+    const selected = this.value;
+    child.innerHTML = '<option value="">Nenhuma subcategoria</option>';
+    (children[selected] || []).forEach(function (item) {
+      const option = document.createElement('option');
+      option.value = item.id;
+      option.textContent = item.name;
+      child.appendChild(option);
+    });
+    child.disabled = !selected || !(children[selected] || []).length;
+  });
+  child.disabled = !parent.value || !(children[parent.value] || []).length;
+})();
+</script>
 <?php require __DIR__ . '/_foot.php';
