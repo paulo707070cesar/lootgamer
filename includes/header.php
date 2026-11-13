@@ -42,7 +42,7 @@ $siteSchema = [
 <script type="application/ld+json"><?= json_encode($siteSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <?php if (!empty($robotsNoindex) || !empty($robotsNofollow)): ?><meta name="robots" content="<?= !empty($robotsNoindex) ? 'noindex' : 'index' ?>,<?= !empty($robotsNofollow) ? 'nofollow' : 'follow' ?>"><?php endif; ?>
 <meta name="theme-color" content="#0a1440">
-<link rel="stylesheet" href="<?= asset('css/style.css') ?>?v=6">
+<link rel="stylesheet" href="<?= asset('css/style.css') ?>?v=7">
 <?php if (!empty($jsonLd)): ?><script type="application/ld+json"><?= json_encode($jsonLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script><?php endif; ?>
 <?php if (setting('analytics_id')): ?><meta name="lg-analytics" content="<?= e(preg_replace('/[^A-Za-z0-9\-]/', '', setting('analytics_id'))) ?>"><?php endif; ?>
 <?= $extraHead ?? '' ?>
