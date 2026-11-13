@@ -3,7 +3,7 @@
  * Listagem com filtros/ordenação/paginação.
  * Espera: $listTitle, $baseWhere (string), $baseParams (array), $listUrl, $defaultOrder, $breadcrumb(array), $intro(optional)
  */
-$perPage = 12;
+$perPage = 15;
 $page = max(1, (int)($_GET['p'] ?? 1));
 $where = $baseWhere; $params = $baseParams;
 $min = parse_money($_GET['min'] ?? ''); $max = parse_money($_GET['max'] ?? '');
