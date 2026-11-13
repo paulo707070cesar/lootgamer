@@ -1,7 +1,40 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php'; $me = require_admin();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    csrf_check(); $id = (int)($_POST['id'] ?? 0); $a = $_POST['action'] ?? '';
+    csrf_check(); $a = $_POST['action'] ?? '';
+
+    // Edição em lote: altera somente os campos escolhidos.
+    if ($a === 'bulk_update') {
+        $ids = array_values(array_unique(array_filter(array_map('intval', (array)($_POST['product_ids'] ?? [])), static fn($v) => $v > 0)));
+        $bulkStatus = trim((string)($_POST['bulk_status'] ?? ''));
+        $bulkCategory = trim((string)($_POST['bulk_category'] ?? ''));
+        if (!$ids) {
+            flash('err', 'Selecione pelo menos um produto.');
+        } elseif ($bulkStatus === '' && $bulkCategory === '') {
+            flash('err', 'Escolha um status ou uma categoria para alterar.');
+        } elseif ($bulkStatus !== '' && !in_array($bulkStatus, ['publicado', 'rascunho', 'inativo'], true)) {
+            flash('err', 'Status inválido.');
+        } else {
+            $set = []; $params = [];
+            if ($bulkStatus !== '') { $set[] = 'status = ?'; $params[] = $bulkStatus; }
+            if ($bulkCategory !== '') {
+                $categoryId = (int)$bulkCategory;
+                $validCategory = q('SELECT id FROM categories WHERE id = ? LIMIT 1', [$categoryId])->fetchColumn();
+                if (!$validCategory) {
+                    flash('err', 'Categoria selecionada não existe.');
+                    redirect($_SERVER['REQUEST_URI']);
+                }
+                $set[] = 'category_id = ?'; $params[] = $categoryId;
+            }
+            $marks = implode(',', array_fill(0, count($ids), '?'));
+            q('UPDATE products SET ' . implode(', ', $set) . ' WHERE id IN (' . $marks . ')', array_merge($params, $ids));
+            log_admin('produtos_edicao_lote', count($ids) . ' produtos; status=' . ($bulkStatus ?: 'inalterado') . '; categoria=' . ($bulkCategory ?: 'inalterada'));
+            flash('ok', count($ids) . ' produto(s) atualizado(s) em lote.');
+        }
+        redirect($_SERVER['REQUEST_URI']);
+    }
+
+    $id = (int)($_POST['id'] ?? 0);
     $p = q('SELECT * FROM products WHERE id = ?', [$id])->fetch();
     if ($p) {
         if ($a === 'delete') {
@@ -34,8 +67,17 @@ $cats = q('SELECT id,name FROM categories ORDER BY name')->fetchAll();
 <form class="bar" method="get"><input name="s" placeholder="Buscar produto..." value="<?= e($s) ?>">
 <select name="status"><option value="">Todos os status</option><?php foreach (['publicado', 'rascunho', 'inativo'] as $x): ?><option <?= $st === $x ? 'selected' : '' ?>><?= $x ?></option><?php endforeach; ?></select>
 <select name="cat"><option value="">Todas as categorias</option><?php foreach ($cats as $c): ?><option value="<?= $c['id'] ?>" <?= $cat === (int)$c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option><?php endforeach; ?></select><button class="btn">Filtrar</button></form>
-<div class="box scroll"><table class="list"><thead><tr><th></th><th>Produto</th><th>Categoria</th><th>Loja</th><th>Preço</th><th>Status</th><th>Cliques</th><th>Ações</th></tr></thead><tbody>
+<form method="post" id="bulkForm" class="bar" style="margin-top:12px;align-items:center;gap:10px;flex-wrap:wrap">
+<?= csrf_field() ?><input type="hidden" name="action" value="bulk_update">
+<strong>✏️ Edição em lote:</strong>
+<span id="bulkCount">0 selecionados</span>
+<select name="bulk_status" aria-label="Alterar status"><option value="">Não alterar status</option><option value="publicado">Publicado</option><option value="rascunho">Rascunho</option><option value="inativo">Inativo</option></select>
+<select name="bulk_category" aria-label="Alterar categoria"><option value="">Não alterar categoria</option><?php foreach ($cats as $c): ?><option value="<?= (int)$c['id'] ?>"><?= e($c['name']) ?></option><?php endforeach; ?></select>
+<button class="btn" type="submit" data-confirm="Aplicar as alterações aos produtos selecionados?">Aplicar aos selecionados</button>
+</form>
+<div class="box scroll"><table class="list"><thead><tr><th><input type="checkbox" id="selectAllProducts" aria-label="Selecionar todos desta página"></th><th>Produto</th><th>Categoria</th><th>Loja</th><th>Preço</th><th>Status</th><th>Cliques</th><th>Ações</th></tr></thead><tbody>
 <?php foreach ($rows as $r): ?><tr>
+<td><input type="checkbox" class="product-select" name="product_ids[]" value="<?= (int)$r['id'] ?>" form="bulkForm" aria-label="Selecionar <?= e($r['name']) ?>"></td>
 <td><img class="thumb" src="<?= e(product_img($r)) ?>" alt="" loading="lazy"></td>
 <td><a href="product-edit.php?id=<?= $r['id'] ?>"><b><?= e($r['name']) ?></b></a><br><small><?= $r['is_featured'] ? '★ destaque ' : '' ?><?= $r['is_promo'] ? '% promo ' : '' ?><?= $r['is_recommended'] ? '👍 recomendado' : '' ?></small></td>
 <td><?= e($r['cname']) ?></td><td><?= e($r['sname']) ?></td><td><?= $r['price'] ? money($r['price']) : '—' ?></td>
@@ -46,4 +88,23 @@ $cats = q('SELECT id,name FROM categories ORDER BY name')->fetchAll();
 <?php endforeach; ?></td></tr><?php endforeach; if (!$rows) echo '<tr><td colspan="8">Nenhum produto.</td></tr>'; ?>
 </tbody></table></div>
 <?php $pages = (int)ceil($tot / $per); if ($pages > 1): ?><div class="pager"><?php for ($i = 1; $i <= $pages; $i++): ?><a class="<?= $i === $pg ? 'on' : '' ?>" href="?<?= e(http_build_query(array_merge($_GET, ['p' => $i]))) ?>"><?= $i ?></a><?php endfor; ?></div><?php endif;
-require __DIR__ . '/_foot.php';
+?>
+<script>
+(function () {
+  const all = document.getElementById('selectAllProducts');
+  const items = Array.from(document.querySelectorAll('.product-select'));
+  const count = document.getElementById('bulkCount');
+  function updateCount() {
+    const n = items.filter(el => el.checked).length;
+    if (count) count.textContent = n + ' selecionado(s)';
+    if (all) {
+      all.checked = items.length > 0 && n === items.length;
+      all.indeterminate = n > 0 && n < items.length;
+    }
+  }
+  if (all) all.addEventListener('change', () => { items.forEach(el => el.checked = all.checked); updateCount(); });
+  items.forEach(el => el.addEventListener('change', updateCount));
+  updateCount();
+})();
+</script>
+<?php require __DIR__ . '/_foot.php';
