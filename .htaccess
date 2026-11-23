@@ -42,3 +42,9 @@ ExpiresByType application/javascript "access plus 7 days"
 <IfModule mod_deflate.c>
 AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
 </IfModule>
+
+
+# Instalador bloqueado publicamente (site já instalado). Use o painel para reparos.
+<FilesMatch "^install\.php$">
+  Require all denied
+</FilesMatch>
