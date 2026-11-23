@@ -21,6 +21,9 @@ RewriteRule ^(sobre|privacidade|termos|cookies|divulgacao-afiliados|como-funcion
 RewriteRule ^sitemap\.xml$ sitemap.php [L]
 RewriteRule ^ir/([0-9]+)/?$ go.php?id=$1 [L,QSA]
 
+# Bloqueia diretórios internos de desenvolvimento (git/deploy)
+RewriteRule ^(admin-legacy|\.github|\.git|includes|includes-site|config|data/(sessions|cache|backups))(/|$) - [F,L]
+
 <FilesMatch "(^\.|\.(sql|log|md|sample\.php)$)">
 Require all denied
 </FilesMatch>
