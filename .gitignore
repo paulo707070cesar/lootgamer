@@ -15,3 +15,5 @@ data/cache/
 data/backups/
 logs/*.log
 data/sessions/*.sess
+.git-old*/
+.git-*/
