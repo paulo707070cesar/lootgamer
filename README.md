@@ -1,64 +1,64 @@
-# 🎮 Loot Gamer — Site de Ofertas Gamer (PHP + MySQL)
+﻿# ðŸŽ® Loot Gamer â€” Site de Ofertas Gamer (PHP + MySQL)
 
-Site de divulgação de ofertas de games, consoles, acessórios, PC Gamer e tecnologia,
-com **painel administrativo completo** (framework XLL), tema escuro próprio,
-sincronização automática de conteúdo e importação de catálogo.
+Site de divulgaÃ§Ã£o de ofertas de games, consoles, acessÃ³rios, PC Gamer e tecnologia,
+com **painel administrativo completo** (framework XLL), tema escuro prÃ³prio,
+sincronizaÃ§Ã£o automÃ¡tica de conteÃºdo e importaÃ§Ã£o de catÃ¡logo.
 
 > **Site:** https://lootgamer.xll.com.br
 > **Painel:** https://lootgamer.xll.com.br/admin/
 
 ---
 
-## ✨ Recursos
+## âœ¨ Recursos
 
-### Site público
-- Home com **banner rotativo (hero)**, categorias com ícones (Material Symbols), ofertas em destaque, seções por categoria, comparador, CTA final
-- Catálogo com **filtros** (ordem, loja, faixa de preço), paginação e busca
-- Página de produto com galeria, descrição, informações de afiliado e produtos relacionados
-- **Links de afiliado** com contagem de cliques (`/ir/{id}` → `go.php`)
-- Blog, páginas institucionais, contato, newsletter, lojas parceiras
-- **SEO**: título/descrição por página, canonical, Open Graph, JSON-LD, `sitemap.xml` dinâmico, `robots.txt`
+### Site pÃºblico
+- Home com **banner rotativo (hero)**, categorias com Ã­cones (Material Symbols), ofertas em destaque, seÃ§Ãµes por categoria, comparador, CTA final
+- CatÃ¡logo com **filtros** (ordem, loja, faixa de preÃ§o), paginaÃ§Ã£o e busca
+- PÃ¡gina de produto com galeria, descriÃ§Ã£o, informaÃ§Ãµes de afiliado e produtos relacionados
+- **Links de afiliado** com contagem de cliques (`/ir/{id}` â†’ `go.php`)
+- Blog, pÃ¡ginas institucionais, contato, newsletter, lojas parceiras
+- **SEO**: tÃ­tulo/descriÃ§Ã£o por pÃ¡gina, canonical, Open Graph, JSON-LD, `sitemap.xml` dinÃ¢mico, `robots.txt`
 - **Favicon** completo (`favicon.ico`, `favicon-32.png`, `apple-touch-icon.png`)
-- **Tema escuro** configurável pelo painel (cores, fontes, ícones)
-- Imagens externas via proxy opcional (`img.php`) com cache e conversão WebP
+- **Tema escuro** configurÃ¡vel pelo painel (cores, fontes, Ã­cones)
+- Imagens externas via proxy opcional (`img.php`) com cache e conversÃ£o WebP
 
 ### Painel administrativo (XLL)
-- **Painel** com métricas (produtos, categorias, descontos, banco, uploads)
-- **Página inicial**: banner do topo, cards promocionais, diferenciais, categorias, seções de produtos, faixa comparador, CTA final, páginas
-- **Produtos**: CRUD completo + formulário com imagem, preço antigo, desconto, link de afiliado, seção da home, ordem
-- **Aparência**: logo, favicon, cores do site (fundo, cards, bordas, texto, texto suave, destaque, desconto, **texto dos botões**, **títulos do rodapé**), fontes
-- **Rodapé, menu e páginas**: links de menu/rodapé e páginas institucionais
-- **Importar / Exportar**: CSV/JSON de produtos com pré-visualização
+- **Painel** com mÃ©tricas (produtos, categorias, descontos, banco, uploads)
+- **PÃ¡gina inicial**: banner do topo, cards promocionais, diferenciais, categorias, seÃ§Ãµes de produtos, faixa comparador, CTA final, pÃ¡ginas
+- **Produtos**: CRUD completo + formulÃ¡rio com imagem, preÃ§o antigo, desconto, link de afiliado, seÃ§Ã£o da home, ordem
+- **AparÃªncia**: logo, favicon, cores do site (fundo, cards, bordas, texto, texto suave, destaque, desconto, **texto dos botÃµes**, **tÃ­tulos do rodapÃ©**), fontes
+- **RodapÃ©, menu e pÃ¡ginas**: links de menu/rodapÃ© e pÃ¡ginas institucionais
+- **Importar / Exportar**: CSV/JSON de produtos com prÃ©-visualizaÃ§Ã£o
 - **Analytics de cliques**, **Mensagens de contato**, **Minha conta**
 - Backup do admin anterior preservado em `admin-legacy/`
 
-### Integrações
-- **Sincronização automática** painel → site público: produtos, categorias, banners, logo/favicon, cores e configurações (`includes/lg-sync-legacy.php`)
-- Compatibilidade com as tabelas legadas do site (o site público lê das tabelas antigas; o painel espelha automaticamente)
+### IntegraÃ§Ãµes
+- **SincronizaÃ§Ã£o automÃ¡tica** painel â†’ site pÃºblico: produtos, categorias, banners, logo/favicon, cores e configuraÃ§Ãµes (`includes/lg-sync-legacy.php`)
+- Compatibilidade com as tabelas legadas do site (o site pÃºblico lÃª das tabelas antigas; o painel espelha automaticamente)
 
 ---
 
-## 🧰 Requisitos
+## ðŸ§° Requisitos
 
-| Item | Versão mínima |
+| Item | VersÃ£o mÃ­nima |
 |---|---|
 | PHP | **8.1+** (testado em 8.2/8.3) |
 | MySQL/MariaDB | 5.7+ / 10.3+ |
-| Extensões PHP | `pdo_mysql`, `mbstring`, `fileinfo`, `gd`, `curl` |
+| ExtensÃµes PHP | `pdo_mysql`, `mbstring`, `fileinfo`, `gd`, `curl` |
 | Servidor | Apache/LiteSpeed (Hostinger) com `mod_rewrite` |
 | Git LFS (opcional, para clonar imagens) | 3.x |
 
 ---
 
-## 🚀 Instalação
+## ðŸš€ InstalaÃ§Ã£o
 
 ### 1. Clonar / enviar os arquivos
 ```bash
-git lfs install          # necessário para baixar as imagens via LFS
+git lfs install          # necessÃ¡rio para baixar as imagens via LFS
 git clone https://github.com/paulo707070cesar/lootgamer.git
 ```
-Envie os arquivos para o diretório público do site
-(ex.: Hostinger → `public_html/lootgamer/`).
+Envie os arquivos para o diretÃ³rio pÃºblico do site
+(ex.: Hostinger â†’ `public_html/lootgamer/`).
 
 ### 2. Configurar o banco de dados
 Crie o banco no hPanel (MySQL) e edite **`config/config.php`**:
@@ -81,125 +81,126 @@ return [
     'upload_max' => 6 * 1024 * 1024,
 ];
 ```
-> `config/config.php` **não é versionado** (está no `.gitignore`). Use `config/config.local.example.php` como base.
+> `config/config.php` **nÃ£o Ã© versionado** (estÃ¡ no `.gitignore`). Use `config/config.local.example.php` como base.
 
 ### 3. Criar as tabelas
-Abra `https://SEU-DOMINIO/install.php` e execute a instalação, **ou** importe:
+Abra `https://SEU-DOMINIO/install.php` e execute a instalaÃ§Ã£o, **ou** importe:
 ```bash
 mysql -u USUARIO -p BANCO < database.sql
 ```
-Depois acesse `/admin/` e entre com o usuário criado.
+Depois acesse `/admin/` e entre com o usuÃ¡rio criado.
 
-### 4. Permissões
+### 4. PermissÃµes
 ```bash
 chmod -R 775 data/uploads data/sessions data/backups data/cache
 chmod -R 775 uploads
 ```
 
-### 5. Configuração inicial no painel
-1. **Aparência** → logo, favicon, cores do tema, fontes
-2. **Página inicial** → banner, categorias, diferenciais, seções, CTA
-3. **Produtos** → cadastrar ou **Importar/Exportar** (CSV)
-4. **Empresa** → rodapé, menu, páginas, SEO
-5. **Conta** → trocar a senha do painel
+### 5. ConfiguraÃ§Ã£o inicial no painel
+1. **AparÃªncia** â†’ logo, favicon, cores do tema, fontes
+2. **PÃ¡gina inicial** â†’ banner, categorias, diferenciais, seÃ§Ãµes, CTA
+3. **Produtos** â†’ cadastrar ou **Importar/Exportar** (CSV)
+4. **Empresa** â†’ rodapÃ©, menu, pÃ¡ginas, SEO
+5. **Conta** â†’ trocar a senha do painel
 
 ---
 
-## 📁 Estrutura do projeto
+## ðŸ“ Estrutura do projeto
 
 ```
-├── admin/                # Painel XLL (dashboard, produtos, aparência, importar...)
-│   └── inc/layout.php    # Layout do painel + hook de sincronização
-├── admin-legacy/         # Painel antigo (backup, não usado)
-├── assets/               # CSS, JS, fontes e imagens do tema
-├── includes/             # Framework XLL (bootstrap, db, functions, uploads...)
-├── includes-site/        # Código do site público (templates e helpers)
-├── config/               # Configurações (config.php não versionado)
-├── data/                 # Uploads do painel, sessões, backups, cache
-├── uploads/              # Uploads do site público (logo, banners, imagens)
-├── index.php             # Home
-├── produto.php           # Página de produto
-├── ofertas.php           # Catálogo com filtros
-├── categoria.php         # Listagem por categoria
-├── go.php                # Redirecionador de afiliado (conta cliques)
-├── img.php               # Proxy de imagens (cache/WebP)
-├── sitemap.php           # Sitemap dinâmico
-├── database.sql          # Estrutura inicial do banco
-└── install.php           # Instalador
+â”œâ”€â”€ admin/                # Painel XLL (dashboard, produtos, aparÃªncia, importar...)
+â”‚   â””â”€â”€ inc/layout.php    # Layout do painel + hook de sincronizaÃ§Ã£o
+â”œâ”€â”€ admin-legacy/         # Painel antigo (backup, nÃ£o usado)
+â”œâ”€â”€ assets/               # CSS, JS, fontes e imagens do tema
+â”œâ”€â”€ includes/             # Framework XLL (bootstrap, db, functions, uploads...)
+â”œâ”€â”€ includes-site/        # CÃ³digo do site pÃºblico (templates e helpers)
+â”œâ”€â”€ config/               # ConfiguraÃ§Ãµes (config.php nÃ£o versionado)
+â”œâ”€â”€ data/                 # Uploads do painel, sessÃµes, backups, cache
+â”œâ”€â”€ uploads/              # Uploads do site pÃºblico (logo, banners, imagens)
+â”œâ”€â”€ index.php             # Home
+â”œâ”€â”€ produto.php           # PÃ¡gina de produto
+â”œâ”€â”€ ofertas.php           # CatÃ¡logo com filtros
+â”œâ”€â”€ categoria.php         # Listagem por categoria
+â”œâ”€â”€ go.php                # Redirecionador de afiliado (conta cliques)
+â”œâ”€â”€ img.php               # Proxy de imagens (cache/WebP)
+â”œâ”€â”€ sitemap.php           # Sitemap dinÃ¢mico
+â”œâ”€â”€ database.sql          # Estrutura inicial do banco
+â””â”€â”€ install.php           # Instalador
 ```
 
 ---
 
-## 🎨 Personalização pelo painel
+## ðŸŽ¨ PersonalizaÃ§Ã£o pelo painel
 
 | O que mudar | Onde |
 |---|---|
-| Cores (fundo, cards, textos, botões, rodapé) | Aparência → Cores do site |
-| Logo, favicon, nome do site | Aparência → Logo, favicon e nome |
-| Banner do topo e cards promocionais | Página inicial |
-| Categorias e ícones | Página inicial → Categorias |
-| Menu e rodapé | Rodapé, menu e páginas |
-| Fontes | Aparência → Fontes |
+| Cores (fundo, cards, textos, botÃµes, rodapÃ©) | AparÃªncia â†’ Cores do site |
+| Logo, favicon, nome do site | AparÃªncia â†’ Logo, favicon e nome |
+| Banner do topo e cards promocionais | PÃ¡gina inicial |
+| Categorias e Ã­cones | PÃ¡gina inicial â†’ Categorias |
+| Menu e rodapÃ© | RodapÃ©, menu e pÃ¡ginas |
+| Fontes | AparÃªncia â†’ Fontes |
 | Produtos | Produtos / Importar-Exportar |
 
-> As cores salvas no painel são injetadas **inline** no `<head>` do site
-> (`assets/css/theme-admin.css` → `includes-site/header.php`), evitando cache.
+> As cores salvas no painel sÃ£o injetadas **inline** no `<head>` do site
+> (`assets/css/theme-admin.css` â†’ `includes-site/header.php`), evitando cache.
 
 ---
 
-## 🔁 Deploy automático (GitHub → Hostinger)
+## ðŸ” Deploy automÃ¡tico (GitHub â†’ Hostinger)
 
-### Opção A — GitHub Actions (FTP/SFTP) ✅ incluso
+### OpÃ§Ã£o A â€” GitHub Actions (FTP/SFTP) âœ… incluso
 O workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) publica
 automaticamente no Hostinger a cada push na branch `main`.
 
-Configure em **Settings → Secrets and variables → Actions**:
+Configure em **Settings â†’ Secrets and variables â†’ Actions**:
 
-| Secret | Exemplo / descrição |
+| Secret | Exemplo / descriÃ§Ã£o |
 |---|---|
 | `FTP_SERVER` | `ftp.lootgamer.xll.com.br` (ou IP do servidor) |
-| `FTP_USERNAME` | usuário FTP do hPanel |
+| `FTP_USERNAME` | usuÃ¡rio FTP do hPanel |
 | `FTP_PASSWORD` | senha FTP |
 | `FTP_SERVER_DIR` | `/public_html/lootgamer/` (ou caminho completo) |
 
 > Para SFTP, troque a action por `wlixcc/SFTP-Deploy-Action` ou use o script `deploy.sh` com `rsync`.
 
-### Opção B — Manual
+### OpÃ§Ã£o B â€” Manual
 ```bash
 git lfs pull                     # garante as imagens
 # envie via FTP/Gerenciador de Arquivos os arquivos alterados
 ```
 
-### Opção C — Hostinger Git (se disponível no plano)
-hPanel → **Avançado → Git** → conectar repositório `paulo707070cesar/lootgamer`
-(branch `main`, diretório `public_html/lootgamer`) e habilitar deploy automático.
+### OpÃ§Ã£o C â€” Hostinger Git (se disponÃ­vel no plano)
+hPanel â†’ **AvanÃ§ado â†’ Git** â†’ conectar repositÃ³rio `paulo707070cesar/lootgamer`
+(branch `main`, diretÃ³rio `public_html/lootgamer`) e habilitar deploy automÃ¡tico.
 
 ---
 
-## 🔒 Segurança
+## ðŸ”’ SeguranÃ§a
 
 - **Nunca** versione `config/config.php` (credenciais do banco)
-- O painel usa sessão própria (`data/sessions`) + CSRF em todos os formulários
-- Uploads validados por MIME/extensão (`includes/uploads.php`); SVG sanitizado
+- O painel usa sessÃ£o prÃ³pria (`data/sessions`) + CSRF em todos os formulÃ¡rios
+- Uploads validados por MIME/extensÃ£o (`includes/uploads.php`); SVG sanitizado
 - Senha do painel com hash `password_hash()`
 - `.htaccess` bloqueia `config/`, `includes/`, `data/` e logs
-- Recomendado: HTTPS forçado, backup periódico do banco e de `data/uploads`
+- Recomendado: HTTPS forÃ§ado, backup periÃ³dico do banco e de `data/uploads`
 
 ---
 
-## 🧪 Diagnóstico rápido
+## ðŸ§ª DiagnÃ³stico rÃ¡pido
 
 | Sintoma | Verifique |
 |---|---|
-| Erro 500 | `logs/php-error.log`; permissões de `data/`; `php -l` nos arquivos alterados |
-| Painel não loga | tabela `admin_usuarios`; sessão em `data/sessions` gravável |
-| Mudanças no painel não aparecem no site | sincronização (`includes/lg-sync-legacy.php`) e cache do hPanel |
+| Erro 500 | `logs/php-error.log`; permissÃµes de `data/`; `php -l` nos arquivos alterados |
+| Painel nÃ£o loga | tabela `admin_usuarios`; sessÃ£o em `data/sessions` gravÃ¡vel |
+| MudanÃ§as no painel nÃ£o aparecem no site | sincronizaÃ§Ã£o (`includes/lg-sync-legacy.php`) e cache do hPanel |
 | Imagens quebradas | `data/uploads` existe e imagens importadas do marketplace/LFS |
-| Cores não mudam | `theme-admin.css` gerado + CSS inline no header; limpar cache |
+| Cores nÃ£o mudam | `theme-admin.css` gerado + CSS inline no header; limpar cache |
 
 ---
 
-## 📄 Licença
+## ðŸ“„ LicenÃ§a
 
-Uso privado do projeto Loot Gamer. Código do framework XLL e do tema incluídos
-no repositório para fins de manutenção e deploy.
+Uso privado do projeto Loot Gamer. CÃ³digo do framework XLL e do tema incluÃ­dos
+no repositÃ³rio para fins de manutenÃ§Ã£o e deploy.
+
