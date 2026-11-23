@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /go.php
+Disallow: /ir/
+Disallow: /install.php
+Allow: /
+# Troque pelo seu domínio:
+Sitemap: https://SEU-DOMINIO.com.br/sitemap.xml

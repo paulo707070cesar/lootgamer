@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+config.php
+*.log
+*.zip
+.DS_Store
+Thumbs.db
+node_modules/
+vendor/
+.idea/
+.vscode/
+data/sessions/
+data/cache/
+data/backups/
+logs/*.log
+data/sessions/*.sess
