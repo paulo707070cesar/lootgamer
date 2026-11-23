@@ -54,7 +54,7 @@ if ($canonical === '') {
     }
 }
 
-$ogImage = $ogImage ?? null;
+$ogImage = $ogImage ?? ('https://lootgamer.xll.com.br' . (setting('logo_path') ? url(setting('logo_path')) : asset('images/seed/logo.png')));
 
 $allCats = q(
     'SELECT id,name,slug
@@ -134,7 +134,16 @@ $siteSchema = [
     )
 ?></script>
 
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Loot Gamer","url":"https://lootgamer.xll.com.br/","logo":"https://lootgamer.xll.com.br/favicon-32.png"}</script>
+<?php
+$organizationSchema = [
+    '@context' => 'https://schema.org',
+    '@type' => 'Organization',
+    'name' => $siteName,
+    'url' => 'https://lootgamer.xll.com.br/',
+    'logo' => 'https://lootgamer.xll.com.br' . (setting('logo_path') ? url(setting('logo_path')) : asset('images/seed/logo.png'))
+];
+?>
+<script type="application/ld+json"><?= json_encode($organizationSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 
 <!-- ROBOTS -->
 <?php if (!empty($robotsNoindex) || !empty($robotsNofollow)): ?>
@@ -155,9 +164,38 @@ $siteSchema = [
 
 <!-- CSS -->
 <link rel="stylesheet" href="<?= asset('css/style.css') ?>?v=7">
-<link rel="stylesheet" href="<?= asset('css/theme-stitch.css') ?>?v=16">
+<link rel="stylesheet" href="<?= asset('css/theme-stitch.css') ?>?v=18">
 <?php $__c=__DIR__.'/../assets/css/theme-admin.css'; if(is_file($__c)){echo '<style id="lg-cores-painel">'.file_get_contents($__c).'</style>';} ?>
 
+<?php
+// Fallback BreadcrumbList for public pages that do not already provide one.
+// Custom product/category/blog schemas are preserved without duplication.
+$schemaHasBreadcrumb = !empty($jsonLd) && str_contains(
+    json_encode($jsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '',
+    'BreadcrumbList'
+);
+if (!$schemaHasBreadcrumb) {
+    $path = trim((string)(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: ''), '/');
+    $crumbItems = [['@type' => 'ListItem', 'position' => 1, 'name' => 'Início', 'item' => 'https://lootgamer.xll.com.br/']];
+    if ($path !== '' && $path !== 'index.php') {
+        $parts = array_values(array_filter(explode('/', $path)));
+        $built = '';
+        foreach ($parts as $index => $part) {
+            $built .= '/' . $part;
+            $label = ucwords(str_replace(['-', '_'], ' ', rawurldecode($part)));
+            $crumbItems[] = ['@type' => 'ListItem', 'position' => count($crumbItems) + 1, 'name' => $label, 'item' => 'https://lootgamer.xll.com.br' . $built];
+        }
+    }
+    $fallbackBreadcrumb = ['@type' => 'BreadcrumbList', 'itemListElement' => $crumbItems];
+    if (!empty($jsonLd['@graph']) && is_array($jsonLd['@graph'])) {
+        $jsonLd['@graph'][] = $fallbackBreadcrumb;
+    } elseif (!empty($jsonLd)) {
+        $jsonLd = ['@context' => 'https://schema.org', '@graph' => [$jsonLd, $fallbackBreadcrumb]];
+    } else {
+        $jsonLd = ['@context' => 'https://schema.org', '@graph' => [$fallbackBreadcrumb]];
+    }
+}
+?>
 <!-- SCHEMA EXTRA -->
 <?php if (!empty($jsonLd)): ?>
 <script type="application/ld+json"><?=

@@ -924,3 +924,62 @@ a.btn-offer *, a.btn-offer.lg *, a.btn-banner *, .filters button * { color: inhe
 
 /* FOOTER TITLES */
 .site-footer h4, .site-footer .fcol h4, .site-footer h3, .site-footer .fcol h3, .fgrid h4 { color: var(--footer-title, var(--neon, #00e5ff)) !important; }
+
+
+/* ===== Botões do topo (Lojas / Contato) — redesign pílula ===== */
+.hd-icons { display: flex !important; align-items: center; gap: 8px !important; }
+.hd-icons a {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  height: 42px !important;
+  min-width: 0 !important;
+  padding: 0 14px !important;
+  border-radius: 12px !important;
+  background: #161a22 !important;
+  border: 1px solid #2f3846 !important;
+  color: #e0e2ec !important;
+  font-family: var(--lg-font-display, 'Outfit', sans-serif) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  line-height: 1 !important;
+  text-decoration: none !important;
+  transition: background .2s ease, border-color .2s ease, transform .2s ease !important;
+}
+.hd-icons a:hover {
+  background: #1d2430 !important;
+  border-color: var(--neon, #00e5ff) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+.hd-icons a .material-symbols-outlined {
+  font-size: 18px !important;
+  color: var(--neon, #00e5ff) !important;
+  margin: 0 !important;
+}
+@media (max-width: 1100px) {
+  .hd-icons a { padding: 0 11px !important; font-size: 10px !important; }
+}
+@media (max-width: 900px) {
+  .hd-icons a span:not(.material-symbols-outlined) { display: none !important; }
+  .hd-icons a { width: 40px !important; padding: 0 !important; border-radius: 11px !important; }
+}
+
+
+/* ===== Ícones das categorias sem contorno azul ===== */
+.cat .material-symbols-outlined,
+.cat .msi-cat {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+.cat:hover .material-symbols-outlined,
+.cat:hover .msi-cat {
+  border: 0 !important;
+  box-shadow: none !important;
+}
