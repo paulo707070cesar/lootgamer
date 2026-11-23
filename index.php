@@ -18,6 +18,18 @@ if ($hero): ?>
 </section>
 <?php endif;
 
+ ?>
+<section class="wrap sec home-intro">
+  <h1 class="home-intro-title">Ofertas de games, consoles e acessórios gamer com desconto</h1>
+  <p>A Loot Gamer reúne ofertas selecionadas de jogos, consoles, periféricos e itens para montar ou melhorar seu setup. Nosso objetivo é facilitar a descoberta de produtos e promoções relevantes para quem joga no PC ou nos consoles.</p>
+  <p>Organizamos achadinhos e oportunidades encontradas em lojas parceiras. Ao clicar em uma oferta, você segue para a página da loja responsável pela venda, onde pode conferir preço atualizado, estoque, frete e condições. Alguns links são afiliados e podem gerar comissão para a Loot Gamer, sem custo adicional para você.</p>
+  <h2>Explore as principais categorias gamer</h2>
+  <p>Encontre <a href="/categoria/jogos-digitais">jogos digitais</a>, <a href="/categoria/consoles">consoles</a>, <a href="/categoria/acessorios-gamer">acessórios gamer</a>, <a href="/categoria/pc-gamer">componentes e periféricos para PC</a> e <a href="/categoria/gift-cards">gift cards e créditos</a>. Cada categoria ajuda você a comparar opções e descobrir produtos relacionados ao seu estilo de jogo.</p>
+  <h2>Como encontrar uma boa oferta</h2>
+  <p>Confira a descrição do produto, o preço, o prazo de entrega e as condições da loja antes de finalizar a compra. Na Loot Gamer você compara opções em um só lugar e só compra quando encontrar a oferta ideal.</p>
+</section>
+
+<?php
 /* 3. Categorias */
 if (section_on('categorias')):
 $cats = q('SELECT * FROM categories WHERE is_active = 1 AND is_main = 1 ORDER BY sort_order, name LIMIT 12')->fetchAll();

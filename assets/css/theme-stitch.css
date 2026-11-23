@@ -983,3 +983,43 @@ a.btn-offer *, a.btn-offer.lg *, a.btn-banner *, .filters button * { color: inhe
   border: 0 !important;
   box-shadow: none !important;
 }
+
+
+/* ===== Logo: sem brilho/contorno; mistura com o fundo escuro ===== */
+.brand, .brand img {
+  filter: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  outline: none !important;
+  background: transparent !important;
+}
+.brand img { mix-blend-mode: screen; border-radius: 0 !important; }
+
+/* ===== Texto de introdução da home ===== */
+.home-intro { padding-top: 26px !important; }
+.home-intro-title {
+  font-family: var(--lg-font-display, 'Outfit', sans-serif) !important;
+  font-size: clamp(22px, 2.6vw, 34px) !important;
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+  letter-spacing: -0.01em !important;
+  text-transform: uppercase !important;
+  color: #f4f7ff !important;
+  margin: 0 0 14px !important;
+}
+.home-intro p {
+  color: var(--muted, #bac9cc) !important;
+  font-size: 14.5px !important;
+  line-height: 1.65 !important;
+  max-width: 980px;
+  margin: 0 0 12px !important;
+}
+.home-intro h2 {
+  font-family: var(--lg-font-display, 'Outfit', sans-serif) !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: #f4f7ff !important;
+  margin: 22px 0 8px !important;
+}
+.home-intro a { color: var(--neon, #00e5ff) !important; text-decoration: underline; text-underline-offset: 2px; }
+.home-intro a:hover { color: #ffffff !important; }

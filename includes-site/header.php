@@ -164,7 +164,7 @@ $organizationSchema = [
 
 <!-- CSS -->
 <link rel="stylesheet" href="<?= asset('css/style.css') ?>?v=7">
-<link rel="stylesheet" href="<?= asset('css/theme-stitch.css') ?>?v=18">
+<link rel="stylesheet" href="<?= asset('css/theme-stitch.css') ?>?v=19">
 <?php $__c=__DIR__.'/../assets/css/theme-admin.css'; if(is_file($__c)){echo '<style id="lg-cores-painel">'.file_get_contents($__c).'</style>';} ?>
 
 <?php

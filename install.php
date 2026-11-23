@@ -3,7 +3,7 @@
  * Instalador do Loot Gamer. Após instalar, o acesso é bloqueado automaticamente.
  * Depois de concluir, APAGUE este arquivo do servidor.
  */
-require_once __DIR__ . '/includes-site/bootstrap.php';
+require_once __DIR__ . '/includes/bootstrap.php';
 
 function run_schema(PDO $pdo): void {
     $sql = file_get_contents(ROOT . '/database.sql');

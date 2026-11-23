@@ -5,7 +5,7 @@
 
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 2) . '/includes-site/bootstrap.php';
+require_once dirname(__DIR__, 2) . '/includes/bootstrap.php';
 xll_require_installed();
 xll_require_admin();
 
