@@ -1,4 +1,5 @@
 <?php
+/* deploy-fix 2026-11-23 */
 /**
  * Listagem com filtros/ordenação/paginação.
  * Espera: $listTitle, $baseWhere (string), $baseParams (array), $listUrl, $defaultOrder, $breadcrumb(array), $intro(optional)

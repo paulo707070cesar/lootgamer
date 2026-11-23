@@ -42,7 +42,7 @@ if ($feat): ?>
 <section class="wrap sec">
   <div class="sec-head"><h2><span class="material-symbols-outlined" aria-hidden="true">emoji_events</span>> Ofertas em Destaque</h2>
     <a class="pill" href="<?= url('ofertas') ?>"><span class="material-symbols-outlined" aria-hidden="true">local_fire_department</span> Descontos Imperdíveis</a></div>
-  <div class="grid g5"><?php foreach ($feat as $p) include ROOT . '/includes/card.php'; ?></div>
+  <div class="grid g5"><?php foreach ($feat as $p) include ROOT . '/includes-site/card.php'; ?></div>
 </section>
 <?php endif; endif;
 
